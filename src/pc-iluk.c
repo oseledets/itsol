@@ -1,5 +1,7 @@
 
 #include "pc-iluk.h"
+#include "itsol.h"
+
 
 /*----------------------------------------------------------------------------
  * ILUK preconditioner
@@ -32,6 +34,90 @@
  * ======
  * All the diagonals of the input matrix must not be zero
  *--------------------------------------------------------------------------*/
+
+
+ITS_ILUSpar *itsol_from_numpy(int n, int lfil, double *data, int *indices, int *indptr)
+{
+    ITS_SparMat *csmat = NULL;  /* matrix in csr formt             */
+    ITS_ILUSpar *lu = NULL;     /* ilu preconditioner structure    */
+    ITS_SMat *MAT;              /* Matrix structure for matvecs    */
+    ITS_PC *PRE;                /* general precond structure       */
+    ITS_PARS io;
+    double *x, *rhs, *sol, terr, norm;
+    int ierr, i, k, its;
+    csmat = (ITS_SparMat *) itsol_malloc(sizeof(ITS_SparMat), "main");
+    lu = (ITS_ILUSpar *) itsol_malloc(sizeof(ITS_ILUSpar), "main");
+    printf("begin iluk(%d)\n", lfil);
+    /*-------------------- conversion from COO to CSR format */
+    csmat->n = n;
+    csmat->nzcount = (int *) itsol_malloc(sizeof(int)*n, "main");
+    csmat->ja = (int **) itsol_malloc(sizeof(int*)*n, "main");
+    csmat->ma = (double **) itsol_malloc(sizeof(double*)*n, "main");
+    for(i=0; i < n; i++)
+    {
+        csmat->nzcount[i] = indptr[i+1]-indptr[i];
+        csmat->ja[i] = (int *) itsol_malloc(sizeof(int)*csmat->nzcount[i], "main");
+        csmat->ma[i] = (double *) itsol_malloc(sizeof(double)*csmat->nzcount[i], "main");
+        for(k=0; k < csmat->nzcount[i]; k++)
+        {
+            (csmat->ja)[i][k] = indices[indptr[i]+k];
+            (csmat->ma)[i][k] = data[indptr[i]+k];
+        }
+         
+    }
+    ierr = itsol_pc_ilukC(lfil, csmat, lu, stdout);
+    
+
+
+    //printf("%d\n", lu->L->nzcount[5]);
+    /*MAT = (ITS_SMat *) itsol_malloc(sizeof(ITS_SMat), "main:MAT");
+    PRE = (ITS_PC *) itsol_malloc(sizeof(ITS_PC), "main:PRE");
+    itsol_solver_init_pars(&io);
+    x = (double *)itsol_malloc(n * sizeof(double), "main");
+    rhs = (double *)itsol_malloc(n * sizeof(double), "main");
+    sol = (double *)itsol_malloc(n * sizeof(double), "main");
+    for( i = 0; i < n; i++ ) x[i] = 0.0;
+    for (i = 0; i < n; i++) rhs[i] = i;
+    MAT->n = n;
+    MAT->CS = csmat;
+    MAT->matvec = itsol_matvecCSR;
+    PRE->ILU = lu;
+    PRE->precon = itsol_preconILU;
+    */
+    /*-------------------- call itsol_solver_fgmres */
+    
+    /*
+    itsol_solver_fgmres(MAT, PRE, rhs, x, io, &its, NULL);
+
+    printf("solver converged in %d steps...\n\n", its);
+    */
+    /*-------------------- calculate residual norm */
+    //itsol_matvec(csmat, x, sol);
+
+    /* error */
+    /*
+    terr = 0.0;
+    norm = 0.;
+    for (i = 0; i < n; i++) {
+        terr += (rhs[i] - sol[i]) * (rhs[i] - sol[i]);
+
+        norm += rhs[i] * rhs[i];
+    }
+
+    printf("residual: %e, relative residual: %e\n\n", sqrt(terr), sqrt(terr / norm));
+    */
+    return lu;
+    //return ierr;
+    //printf("%d\n:", n);
+    //for(int i=0;i<=n;i++)
+    //{
+    //    printf("%d, %d, %f\n:", i, indices[i], data[i]);
+    //}
+    
+
+}
+
+
 int itsol_pc_ilukC(int lofM, ITS_SparMat *csmat, ITS_ILUSpar *lu, FILE * fp)
 {
     int ierr;
@@ -39,17 +125,19 @@ int itsol_pc_ilukC(int lofM, ITS_SparMat *csmat, ITS_ILUSpar *lu, FILE * fp)
     int *jw, i, j, k, col, jpos, jrow;
     ITS_SparMat *L, *U;
     double *D;
-
     itsol_setupILU(lu, n);
+    //printf("%d", n);//lu->L->nzcount[5]);
     L = lu->L;
     U = lu->U;
     D = lu->D;
-
+    
     /* symbolic factorization to calculate level of fill index arrays */
     if ((ierr = itsol_pc_lofC(lofM, csmat, lu, fp)) != 0) {
         fprintf(fp, "Error: lofC\n");
         return -1;
     }
+    //printf("%d\n", ierr);
+    //printf("%d\n", lu->L->nzcount[0]);
 
     jw = lu->work;
     /* set indicator array jw to -1 */
@@ -162,7 +250,6 @@ int itsol_pc_lofC(int lofM, ITS_SparMat *csmat, ITS_ILUSpar *lu, FILE * fp)
     int *levls = NULL, *jbuf = NULL, *iw = lu->work;
     int **ulvl;                 /*  stores lev-fils for U part of ILU factorization */
     ITS_SparMat *L = lu->L, *U = lu->U;
-
     /*--------------------------------------------------------------------
      * n        = number of rows or columns in matrix
      * inc      = integer, count of nonzero(fillin) element of each row
@@ -176,7 +263,6 @@ int itsol_pc_lofC(int lofM, ITS_SparMat *csmat, ITS_ILUSpar *lu, FILE * fp)
     int incl, incu, jmin, kmin;
 
     (void)fp;
-
     levls = (int *)itsol_malloc(n * sizeof(int), "lofC");
     jbuf = (int *)itsol_malloc(n * sizeof(int), "lofC");
     ulvl = (int **)itsol_malloc(n * sizeof(int *), "lofC");

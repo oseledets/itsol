@@ -64,6 +64,9 @@ void * itsol_malloc(int nbytes, char *msg)
   |             0   --> successful return.
   |             1   --> memory allocation error.
   |--------------------------------------------------------------------*/
+
+
+
 int itsol_setupCS(ITS_SparMat *amat, int len, int job)
 {
     amat->n = len;
@@ -934,7 +937,38 @@ int itsol_CSRcs(int n, double *a, int *ja, int *ia, ITS_SparMat *mat, int rsa)
     }
     return 0;
 }
+/*----------------------------------------------------------------------
+  | Convert SpaFmt to numpy CSR structure
+  |--------------------------------------------------------------------*/
+ITS_CSRnumpy * itsol_SpaFmtNumpy(ITS_SparMat *a)
+{
+    int i, k, n, nnz;
+    ITS_CSRnumpy *b = NULL;
+    b = (ITS_CSRnumpy * ) itsol_malloc(sizeof(ITS_CSRnumpy), "numpy copy");
+    b->n = a->n;
+    n = a->n;
+    //We first need to count the total number of non-zeroes for the matrix
+    nnz = 0;
+    for(i=0;i<n;i++)
+    {
+        nnz += a->nzcount[i];
+    }
+    b->indptr = (int *) itsol_malloc((n+1)*sizeof(int), "numpy_copy");
+    b->indices = (int *) itsol_malloc(nnz*sizeof(int), "numpy_copy");
+    b->data = (double *) itsol_malloc(nnz*sizeof(double), "numpy copy");
+    b->indptr[0] = 0;
+    for(i=0;i<n;i++)
+    {
+        b->indptr[i+1] = b->indptr[i] + a->nzcount[i];
+        for(k=0; k < a->nzcount[i]; k++)
+        {
+            b->indices[b->indptr[i]+k] = (a->ja)[i][k];
+            b->data[b->indptr[i]+k] = (a->ma)[i][k];
+        }
+    }
+    return b;
 
+}
 /*----------------------------------------------------------------------
   | Convert COO matrix to SpaFmt struct
   |----------------------------------------------------------------------

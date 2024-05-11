@@ -38,6 +38,16 @@ typedef struct ITS_SparMat_
 
 } ITS_SparMat;
 
+// For numpy
+typedef struct ITS_CSRnumpy_
+{
+    int n;
+    int *indices;
+    int *indptr; 
+    double *data;
+
+} ITS_CSRnumpy;
+
 typedef struct ITS_CooMat_
 {
     int n;

@@ -40,6 +40,7 @@ int itsol_nnz_lev4(ITS_Per4Mat *levmat, int *lev, FILE *ft);
 int itsol_setupILU(ITS_ILUSpar *lu, int n);
 int itsol_CS2lum(int n, ITS_SparMat *Amat, ITS_ILUSpar *mat, int typ);
 int itsol_COOcs(int n, int nnz,  double *a, int *ja, int *ia, ITS_SparMat *bmat);
+ITS_CSRnumpy * itsol_SpaFmtNumpy(ITS_SparMat *a);
 void itsol_coocsr_(int*, int*, double*, int*, int*, double*, int*, int*);
 
 int itsol_csSplit4(ITS_SparMat *amat, int bsize, int csize, ITS_SparMat *B, ITS_SparMat *F, ITS_SparMat *E, ITS_SparMat *C);
