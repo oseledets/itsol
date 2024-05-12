@@ -41,7 +41,7 @@ ffibuilder.set_source("_itsol_cffi",
      #include "include/utils.h"
      #include "include/mat-utils.h"
 """,
-     libraries=['itsol','gfortran'], library_dirs=['./src/'])   # library name, for the linker
+     libraries=['itsol','gfortran', 'blas', 'lapack'], library_dirs=['./src/'])   # library name, for the linker
 if __name__ == "__main__":
     ffibuilder.compile(verbose=True)
 

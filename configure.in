@@ -19,15 +19,16 @@ AC_PROG_CC(gcc clang icc)
 AC_PROG_FC(gfortran g77 f77 ifort)
 AC_PROG_CPP
 
+CFLAGS="$CFLAGS -fPIC"
 if test "$GCC" = "yes"; then
     if $CC -V 2>&1 | grep -q Intel; then
-        CFLAGS="$CFLAGS -Wall"
+        CFLAGS="$CFLAGS -fPIC -Wall"
     elif $CC -v 2>&1 | grep -q clang; then
-        CFLAGS="$CFLAGS -Wall -Wextra -Warray-bounds"
+        CFLAGS="$CFLAGS -fPIC -Wall -Wextra -Warray-bounds"
     elif $CC -v 2>&1 | grep -q gcc; then
-        CFLAGS="$CFLAGS -Wall -Wextra"
+        CFLAGS="$CFLAGS -fPIC -Wall -Wextra"
 
-        for d in -Wmissing-declarations -Wmissing-prototypes -Wimplicit-function-declaration        \
+        for d in -fPIC -Wmissing-declarations -Wmissing-prototypes -Wimplicit-function-declaration        \
             -Wunused -Wuninitialized -Wvla -Wformat -Wformat-security -Wmain -Wsequence-point       \
             -Wshadow -Wbad-function-cast -Wcomments -Wdeclaration-after-statement                   \
             -Waddress -Wpointer-sign -Wempty-body -Wnested-externs -Wold-style-declaration          \
